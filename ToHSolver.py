@@ -1,10 +1,11 @@
-# Algorithm to solve the towers of hanoi in a minimum amount of moves
+# Algorithm to solve the towers of hanoi in an optimal fashion
 # Adam Snoyman, adamsnoyman@gmail.com, September 2021
 
 import pygame
 import time
 
 FPS = 60
+SLEEP = 0.1  # time between moves
 
 # Colours used
 GREY = (169, 169, 169)
@@ -51,7 +52,7 @@ def drawWindow(rings, n):
     pygame.display.update()
 
 def moveStack(window, rings, size, n, start, empty, end):
-    time.sleep(0.1)
+    time.sleep(SLEEP)
     # If the stack of rings is empty, return
     if size == 0:
         return
@@ -59,7 +60,7 @@ def moveStack(window, rings, size, n, start, empty, end):
     # Move the stack one higher to the empty peg
     moveStack(window, rings, size - 1, n, start, end, empty)
 
-    time.sleep(0.1)
+    time.sleep(SLEEP)
     # Move the next bring to the goal
     rings[size - 1].peg = end
 
@@ -71,7 +72,7 @@ def moveStack(window, rings, size, n, start, empty, end):
 
     drawWindow(rings, n)
 
-    time.sleep(0.1)
+    time.sleep(SLEEP)
     # Move the stack to the goal
     moveStack(window, rings, size - 1, n, empty, start, end)
 
