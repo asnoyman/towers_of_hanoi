@@ -4,6 +4,7 @@
 import pygame
 
 FPS = 60
+SLEEP = 100
 
 # Colours used
 GREY = (169, 169, 169)
@@ -49,7 +50,7 @@ def drawWindow(window, rings, n):
     pygame.event.pump()
 
 def moveStack(window, rings, size, n, start, empty, end):
-    pygame.time.delay(100) 
+    pygame.time.delay(SLEEP) 
 
     # If the stack of rings is empty, return
     if size == 0:
@@ -58,7 +59,7 @@ def moveStack(window, rings, size, n, start, empty, end):
     # Move the stack (except the bottom ring) to the empty peg
     moveStack(window, rings, size - 1, n, start, end, empty)
 
-    pygame.time.delay(100)  
+    pygame.time.delay(SLEEP)  
 
     # Move the next ring to the goal
     rings[size - 1].peg = end
@@ -71,7 +72,7 @@ def moveStack(window, rings, size, n, start, empty, end):
 
     drawWindow(window, rings, n)
 
-    pygame.time.delay(100)
+    pygame.time.delay(SLEEP)
 
     # Move the stack to the goal
     moveStack(window, rings, size - 1, n, empty, start, end)
