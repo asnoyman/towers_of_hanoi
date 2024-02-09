@@ -2,7 +2,7 @@
 # Adam Snoyman, adamsnoyman@gmail.com, September 2021
 
 import pygame
-import heapq
+import sys
 
 from pygame.constants import WINDOWHITTEST
 
@@ -48,8 +48,7 @@ class Ring:
             pygame.draw.rect(window, WHITE, (300 - self.size * hStep + self.peg * 375, \
             600 - self.height * vStep, 2 * (self.size * hStep) + 25, vStep), 3)
 
-def drawBackground(n):
-    window = pygame.display.set_mode((1400, 700))
+def drawBackground(window):
     window.fill(GREY)
     base = pygame.Rect(100, 600, 1200, 25)
     pygame.draw.rect(window, BLACK, base)
@@ -59,7 +58,6 @@ def drawBackground(n):
     pygame.draw.rect(window, BLACK, pole2)
     pole3 = pygame.Rect(1050, 100, 25, 500)
     pygame.draw.rect(window, BLACK, pole3)
-    return window
 
 def makeRings(n):
     rings = []
@@ -95,21 +93,24 @@ def placeRing(pegs, targetPeg, originPeg):
         return True
     return False
 
-def drawWindow(pegs, n):
-    window = drawBackground(n)
+def drawWindow(window, pegs, n):
+    drawBackground(window)
     for i in range(3):
         for j in range(pegs[i].size):
             pegs[i].rings[j].draw(window, min(15, 175 // n), min(25, 499 // n))
-    pygame.display.update()
+    pygame.display.flip()
 
 def main():
 
     n = int(input("Enter tower height: "))
-    rings = makeRings(n)
-    pegs = makePegs(rings)
-    drawWindow(pegs, n)
 
     clock = pygame.time.Clock()
+    pygame.init()
+
+    window = pygame.display.set_mode((1400, 700))
+    rings = makeRings(n)
+    pegs = makePegs(rings)
+    drawWindow(window, pegs, n)
 
     quit = False
     origin = None
@@ -119,7 +120,6 @@ def main():
     while run:
         for event in pygame.event.get():
             pos = pygame.mouse.get_pos()
-            clock.tick(FPS)
             if event.type == pygame.QUIT:
                 run = False
                 quit = True
@@ -149,20 +149,23 @@ def main():
             else: 
                 print(f"Congratulations, you finished in {tally} moves!")
             run = False
-        drawWindow(pegs, n)     
+        drawWindow(window, pegs, n)
+        clock.tick(FPS)   
+          
 
     if quit == True:
         pygame.quit()
+        sys.exit()
     
     run = True
     while run:
+        clock.tick(FPS)
         for event in pygame.event.get():
-            pos = pygame.mouse.get_pos()
-            clock.tick(FPS)
             if event.type == pygame.QUIT:
                 run = False
 
     pygame.quit()
+    sys.exit()
 
 if __name__ == "__main__":
     main()

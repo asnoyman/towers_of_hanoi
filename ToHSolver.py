@@ -1,11 +1,9 @@
-# Algorithm to solve the towers of hanoi in an optimal fashion
+# Algorithm to solve the towers of hanoi in a minimum amount of moves
 # Adam Snoyman, adamsnoyman@gmail.com, September 2021
 
 import pygame
-import time
 
 FPS = 60
-SLEEP = 0.1  # time between moves
 
 # Colours used
 GREY = (169, 169, 169)
@@ -26,8 +24,7 @@ class Ring:
         pygame.draw.rect(window, self.colour, (300 - self.size * hStep + self.peg * 375, \
             600 - self.height * vStep, 2 * (self.size * hStep) + 25, vStep))
 
-def drawBackground(n):
-    window = pygame.display.set_mode((1400, 700))
+def drawBackground(window):
     window.fill(GREY)
     base = pygame.Rect(100, 600, 1200, 25)
     pygame.draw.rect(window, BLACK, base)
@@ -37,7 +34,6 @@ def drawBackground(n):
     pygame.draw.rect(window, BLACK, pole2)
     pole3 = pygame.Rect(1050, 100, 25, 500)
     pygame.draw.rect(window, BLACK, pole3)
-    return window
 
 def makeRings(n):
     rings = []
@@ -45,23 +41,26 @@ def makeRings(n):
         rings.append(Ring(n, i, 0, n - i))
     return rings
 
-def drawWindow(rings, n):
-    window = drawBackground(n)
+def drawWindow(window, rings, n):
+    drawBackground(window)
     for i in range(n):
         rings[i].draw(window, min(15, 175 // n), min(25, 499 // n))
-    pygame.display.update()
+    pygame.display.flip()
+    pygame.event.pump()
 
 def moveStack(window, rings, size, n, start, empty, end):
-    time.sleep(SLEEP)
+    pygame.time.delay(100) 
+
     # If the stack of rings is empty, return
     if size == 0:
         return
 
-    # Move the stack one higher to the empty peg
+    # Move the stack (except the bottom ring) to the empty peg
     moveStack(window, rings, size - 1, n, start, end, empty)
 
-    time.sleep(SLEEP)
-    # Move the next bring to the goal
+    pygame.time.delay(100)  
+
+    # Move the next ring to the goal
     rings[size - 1].peg = end
 
     tally = 0
@@ -70,18 +69,19 @@ def moveStack(window, rings, size, n, start, empty, end):
             tally += 1
     rings[size - 1].height = tally
 
-    drawWindow(rings, n)
+    drawWindow(window, rings, n)
 
-    time.sleep(SLEEP)
+    pygame.time.delay(100)
+
     # Move the stack to the goal
     moveStack(window, rings, size - 1, n, empty, start, end)
 
 def main():
 
     n = int(input("Enter tower height: "))
-    window = drawBackground(n)
+    window = pygame.display.set_mode((1400, 700))
     rings = makeRings(n)
-    drawWindow(rings, n)
+    drawWindow(window, rings, n)
 
     clock = pygame.time.Clock()
 

@@ -6,6 +6,8 @@ import heapq
 
 from pygame.constants import WINDOWHITTEST
 
+pygame.init()
+
 FPS = 60
 
 # Colours used
@@ -54,8 +56,7 @@ class Ring:
                 return True
         return False
 
-def drawBackground():
-    window = pygame.display.set_mode((1400, 700))
+def drawBackground(window):
     window.fill(GREY)
     base = pygame.Rect(100, 600, 1200, 25)
     pygame.draw.rect(window, BLACK, base)
@@ -100,19 +101,21 @@ def placeRing(pegs, targetPeg, originPeg):
         return True
     return False
 
-def drawWindow(pegs):
-    window = drawBackground()
+def drawWindow(window, pegs):
+    window = drawBackground(window)
     for i in range(3):
         for j in range(pegs[i].size):
             pegs[i].rings[j].draw(window)
-    pygame.display.update()
+    pygame.display.flip()
 
 def main():
 
     n = int(input("Enter tower height: "))
+    window = pygame.display.set_mode((1400, 700))
+
     rings = makeRings(n)
     pegs = makePegs(rings)
-    drawWindow(pegs)
+    drawWindow(window, pegs)
 
     clock = pygame.time.Clock()
 
@@ -124,7 +127,6 @@ def main():
     while run:
         for event in pygame.event.get():
             pos = pygame.mouse.get_pos()
-            clock.tick(FPS)
             if event.type == pygame.QUIT:
                 run = False
             elif event.type == pygame.KEYDOWN:
@@ -154,7 +156,8 @@ def main():
         if pegs[2].size == n:
             print(f"Congratulations, you finished in {tally} moves!")
             run = False
-        drawWindow(pegs)
+        drawWindow(window, pegs)
+        clock.tick(FPS)
                 
 
     pygame.quit()
