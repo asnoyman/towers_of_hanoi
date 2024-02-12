@@ -1,61 +1,30 @@
-# Algorithm to play the towers of hanoi in a minimum amount of moves
+# Algorithm to solve the towers of hanoi in a minimum amount of moves
 # Adam Snoyman, adamsnoyman@gmail.com, September 2021
 
 import pygame
-import heapq
 import asyncio
 
-from pygame.constants import WINDOWHITTEST
-
-pygame.init()
-
 FPS = 60
+SLEEP = 300
 
 # Colours used
-WHITE = (255, 255, 255)
 GREY = (169, 169, 169)
 BLACK = (0,0,0)
 COLOURS = [(255, 0, 0), (255, 127, 0), (255, 255, 0), \
     (0, 255, 0), (0, 255, 255), (0, 127, 255), \
     (0, 0, 255), (127, 0, 255), (255, 0, 255)]
 
-class Peg:
-    def __init__(self, rings, coords):
-        self.rings = rings
-        self.size = len(rings)
-        self.left = coords[0]
-        self.right = coords[1]
-        self.top = coords[2]
-        self.bottom = coords[3]
-    
-    def isOver(self, pos):
-        # pos is the mouse position
-        # ie: a tuple of (col,row) coordinates
-        if pos[1] > self.top and pos[1] < self.bottom:
-            if pos[0] > self.left and pos[0] < self.right:
-                return True
-        return False
-
 class Ring:
-    def __init__(self, i, n, peg):
+    def __init__(self, n, i, peg, height):
         self.size = i + 1 # int from 1 - n
         self.colour = COLOURS[i%9] # Picked from COLOURS
+        # self.colour = (255 - i * 255 // n, 0, i * 255 // n) # for a gradient between red and blue
         self.peg = peg # int from 0 - 2
-        self.height = n - i # int from 1 - n
-        self.selected = (0,0) # Relative coordinates from where the mouse clicked
-        self.hStep = min(15, 275 // n)
-        self.vStep = min(25, 499 // n)
+        self.height = height # int from 1 - n
 
-    def draw(self, window):
-        pygame.draw.rect(window, self.colour, (300 - self.size * self.hStep + self.peg * 375 + self.selected[1], \
-            600 - self.height * self.vStep + self.selected[0], 2 * (self.size * self.hStep) + 25, self.vStep))
-
-    def isOver(self, pos):
-        if pos[1] > 600 - self.height * self.vStep and pos[1] < 600 - (self.height - 1) * self.vStep:
-            if pos[0] > 300 - self.size * self.hStep + self.peg * 375 and \
-                    pos[0] < 325 + self.size * self.hStep + self.peg * 375:
-                return True
-        return False
+    def draw(self, window, hStep, vStep):
+        pygame.draw.rect(window, self.colour, (300 - self.size * hStep + self.peg * 375, \
+            600 - self.height * vStep, 2 * (self.size * hStep) + 25, vStep))
 
 def drawBackground(window):
     window.fill(GREY)
@@ -67,64 +36,55 @@ def drawBackground(window):
     pygame.draw.rect(window, BLACK, pole2)
     pole3 = pygame.Rect(1050, 100, 25, 500)
     pygame.draw.rect(window, BLACK, pole3)
-    return window
 
 def makeRings(n):
     rings = []
     for i in range(n):
-        rings.insert(0, Ring(i, n, 0))
+        rings.append(Ring(n, i, 0, n - i))
     return rings
 
-def makePegs(rings):
-    pegs = []
-    pegs.append(Peg(rings, [100, 475, 100, 600]))
-    pegs.append(Peg([], [475, 875, 100, 600]))
-    pegs.append(Peg([], [875, 1300, 100, 600]))
-    return pegs
-
-def selectRing(pos, peg):
-    if peg.size > 0 and peg.rings[-1].isOver(pos):
-        return True
-    return False
-
-def placeRing(pegs, targetPeg, originPeg):
-    if targetPeg == originPeg:
-        return False
-    ring = pegs[originPeg].rings[-1]
-    ring.selected = (0,0)
-    if pegs[targetPeg].size == 0 or ring.size < pegs[targetPeg].rings[-1].size:
-        ring = pegs[originPeg].rings.pop()
-        ring.height = pegs[targetPeg].size + 1
-        ring.peg = targetPeg
-        pegs[targetPeg].rings.append(ring)
-        pegs[targetPeg].size += 1
-        pegs[originPeg].size -= 1
-        return True
-    return False
-
-def drawWindow(window, pegs, n=1, final=False, numMoves=0):
-    window = drawBackground(window)
-    for i in range(3):
-        for j in range(pegs[i].size):
-            pegs[i].rings[j].draw(window)
-    if final:
-        font = pygame.font.Font(None, 32)
-        txt_surface = ""
-        if numMoves == 2**n - 1:
-            txt_surface = font.render("Congratulations, you finished in the optimal number of moves!!", True, BLACK)
-        else: 
-            txt_surface = font.render(f"Congratulations, you finished in {numMoves} moves!", True, BLACK)
-        window.blit(txt_surface, (300, 30))
+def drawWindow(window, rings, n):
+    drawBackground(window)
+    for i in range(n):
+        rings[i].draw(window, min(15, 175 // n), min(25, 499 // n))
     pygame.display.flip()
+    pygame.event.pump()
+
+async def moveStack(window, rings, size, n, start, empty, end):
+    await asyncio.sleep((SLEEP // n) / 1000) 
+
+    # If the stack of rings is empty, return
+    if size == 0:
+        return
+
+    # Move the stack (except the bottom ring) to the empty peg
+    await moveStack(window, rings, size - 1, n, start, end, empty)
+
+    await asyncio.sleep((SLEEP // n) / 1000)  
+
+    # Move the next ring to the goal
+    rings[size - 1].peg = end
+
+    tally = 0
+    for i in range(n):
+        if rings[i].peg == end:
+            tally += 1
+    rings[size - 1].height = tally
+
+    drawWindow(window, rings, n)
+
+    await asyncio.sleep((SLEEP // n) / 1000)
+
+    # Move the stack to the goal
+    await moveStack(window, rings, size - 1, n, empty, start, end)
 
 async def main():
 
-    n = 4
     clock = pygame.time.Clock()
-    pygame.init()
+    pygame.init()  
 
+    n = 4
     window = pygame.display.set_mode((1400, 700))
-
     # Get number of rings
     font = pygame.font.Font(None, 32)
     text = 'Enter number of rings: '
@@ -154,52 +114,17 @@ async def main():
         await asyncio.sleep(0)
 
     rings = makeRings(n)
-    pegs = makePegs(rings)
+    drawWindow(window, rings, n)
 
-    drawWindow(window, pegs)
+    await moveStack(window, rings, n, n, 0, 1, 2)
 
-    coords = None
-    origin = None
-    drag = False
-    tally = 0
     run = True
     while run:
         for event in pygame.event.get():
-            pos = pygame.mouse.get_pos()
+            clock.tick(FPS)
             if event.type == pygame.QUIT:
                 run = False
-            elif event.type == pygame.KEYDOWN:
-                if event.key == pygame.K_r:
-                    rings = makeRings(n)
-                    pegs = makePegs(rings)
-                    tally = 0
-            elif event.type == pygame.MOUSEBUTTONDOWN:
-                for i in range(3):
-                    if selectRing(pos, pegs[i]):
-                        origin = i
-                        drag = True
-                        coords = pos
-            elif event.type == pygame.MOUSEMOTION and drag:
-                pegs[origin].rings[-1].selected = (pos[1] - coords[1], pos[0] - coords[0])
-            elif event.type == pygame.MOUSEBUTTONUP and drag:
-                placed = False
-                for i in range(3):
-                    if pegs[i].isOver(pos):  
-                        if placeRing(pegs, i, origin):
-                            placed = True
-                            tally += 1
-                if placed == False:
-                    pegs[origin].rings[-1].selected = (0,0)
-                drag = False
-
-        if pegs[2].size == n:
-            drawWindow(window, pegs, n, True, tally)
-            await asyncio.sleep(0)
-            break
-        drawWindow(window, pegs)
-        clock.tick(FPS)
         await asyncio.sleep(0)
-                
 
     pygame.quit()
 
