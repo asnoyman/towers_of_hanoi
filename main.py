@@ -112,7 +112,7 @@ def drawWindow(window, pegs, n, final=False, numMoves=0):
 
 async def main():
 
-    n = 1
+    n = 4
     clock = pygame.time.Clock()
     pygame.init()
 
@@ -143,8 +143,9 @@ async def main():
         
         txt_surface = font.render(text + input, True, BLACK)
         window.blit(txt_surface, (300, 100))
-
-        pygame.display.update()
+        pygame.display.flip()
+        clock.tick(FPS)   
+        await asyncio.sleep(0)
 
     rings = makeRings(n)
     pegs = makePegs(rings)
@@ -184,6 +185,7 @@ async def main():
                                 ringSelected = True
         if pegs[2].size == n:
             drawWindow(window, pegs, n, True, tally)
+            await asyncio.sleep(0)
             break
         drawWindow(window, pegs, n)
         clock.tick(FPS)   
