@@ -94,23 +94,61 @@ def placeRing(pegs, targetPeg, originPeg):
         return True
     return False
 
-def drawWindow(window, pegs, n):
+def drawWindow(window, pegs, n, final=False, numMoves=0):
     drawBackground(window)
     for i in range(3):
         for j in range(pegs[i].size):
             pegs[i].rings[j].draw(window, min(15, 175 // n), min(25, 499 // n))
+    
+    if final:
+        font = pygame.font.Font(None, 32)
+        txt_surface = ""
+        if numMoves == 2**n - 1:
+            txt_surface = font.render("Congratulations, you finished in the optimal number of moves!!", True, BLACK)
+        else: 
+            txt_surface = font.render(f"Congratulations, you finished in {numMoves} moves!", True, BLACK)
+        window.blit(txt_surface, (300, 30))
     pygame.display.flip()
 
 async def main():
 
-    n = 4
-
+    n = 1
     clock = pygame.time.Clock()
     pygame.init()
 
     window = pygame.display.set_mode((1400, 700))
+
+    # Get number of rings
+    font = pygame.font.Font(None, 32)
+    text = 'Enter number of rings: '
+    input = '' 
+    run = True
+    while run:
+        window.fill(GREY)
+        for event in pygame.event.get():
+            clock.tick(FPS)
+            if event.type == pygame.QUIT:
+                pygame.quit()
+            if event.type == pygame.KEYDOWN:
+                if event.key == pygame.K_RETURN:
+                    if input.strip().isnumeric():
+                        n = int(input.strip())
+                        run = False
+                    else:
+                        text = "Enter a whole number of rings: "
+                elif event.key == pygame.K_BACKSPACE:
+                    input = input[:-1]
+                else:
+                    input += event.unicode
+        
+        txt_surface = font.render(text + input, True, BLACK)
+        window.blit(txt_surface, (300, 100))
+
+        pygame.display.update()
+
     rings = makeRings(n)
     pegs = makePegs(rings)
+
     drawWindow(window, pegs, n)
 
     quit = False
@@ -145,11 +183,8 @@ async def main():
                                 origin = i
                                 ringSelected = True
         if pegs[2].size == n:
-            if tally == 2**n - 1:
-                print("Congratulations, you finished in the optimal number of moves!!")
-            else: 
-                print(f"Congratulations, you finished in {tally} moves!")
-            run = False
+            drawWindow(window, pegs, n, True, tally)
+            break
         drawWindow(window, pegs, n)
         clock.tick(FPS)   
         await asyncio.sleep(0)
